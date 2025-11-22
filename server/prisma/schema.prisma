@@ -61,6 +61,8 @@ model Product {
   category    String?
   uom         String    @default("UNIT") // Unit of Measure
   minStock    Int       @default(10)
+  price       Float     @default(0.0)
+  isActive    Boolean   @default(true)
   
   stock       Stock[]
   transactionItems TransactionItem[]

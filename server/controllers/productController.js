@@ -10,16 +10,36 @@ const productSchema = z.object({
     uom: z.string().default('UNIT'),
     minStock: z.number().min(0).default(0),
     description: z.string().optional(),
+    price: z.number().min(0).default(0),
+    isActive: z.boolean().default(true),
 });
 
 const getProducts = async (req, res) => {
     try {
+        const { search, category, activeOnly } = req.query;
+
+        const where = {};
+        if (activeOnly === 'true') {
+            where.isActive = true;
+        }
+        if (category) {
+            where.category = category;
+        }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { sku: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
         const products = await prisma.product.findMany({
+            where,
             include: {
                 stock: {
                     include: { warehouse: true }
                 }
-            }
+            },
+            orderBy: { name: 'asc' }
         });
 
         // Calculate total stock for each product

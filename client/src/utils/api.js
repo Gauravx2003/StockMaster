@@ -40,10 +40,15 @@ export const api = {
     getMe: () => fetchWithAuth('/auth/me'),
     register: (data) => fetchWithAuth('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
-    getProducts: () => fetchWithAuth('/products'),
+    getProducts: (params) => {
+        const queryString = new URLSearchParams(params).toString();
+        return fetchWithAuth(`/products?${queryString}`);
+    },
     getProduct: (id) => fetchWithAuth(`/products/${id}`),
+    getProductStock: (id) => fetchWithAuth(`/products/${id}/stock`),
     createProduct: (data) => fetchWithAuth('/products', { method: 'POST', body: JSON.stringify(data) }),
     updateProduct: (id, data) => fetchWithAuth(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteProduct: (id) => fetchWithAuth(`/products/${id}`, { method: 'DELETE' }),
 
     getWarehouses: () => fetchWithAuth('/warehouses'),
     createWarehouse: (data) => fetchWithAuth('/warehouses', { method: 'POST', body: JSON.stringify(data) }),

@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/', authenticateToken, getProducts);
 router.get('/:id', authenticateToken, getProduct);
 router.post('/', authenticateToken, createProduct);
+router.put('/:id', authenticateToken, updateProduct);
 router.delete('/:id', authenticateToken, deleteProduct);
 router.get('/:id/stock', authenticateToken, getProductStock);
 
