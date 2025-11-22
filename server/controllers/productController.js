@@ -132,10 +132,11 @@ const getProductStock = async (req, res) => {
         const { id } = req.params;
         const stock = await prisma.stock.findMany({
             where: { productId: id },
-            include: { warehouse: true, location: true }
+            include: { warehouse: true, subLocation: true }
         });
         res.json(stock);
     } catch (error) {
+        console.error('Error fetching product stock:', error);
         res.status(500).json({ message: 'Error fetching product stock' });
     }
 };

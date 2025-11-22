@@ -101,18 +101,16 @@ const validateTransaction = async (req, res) => {
                     // Increase Target
                     await tx.stock.upsert({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.targetWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null 
+                                productId: item.productId
                             } 
                         },
                         update: { quantity: { increment: item.quantity } },
                         create: { 
                             warehouseId: transaction.targetWarehouseId, 
                             productId: item.productId, 
-                            quantity: item.quantity,
-                            subLocationId: null
+                            quantity: item.quantity
                         }
                     });
                     // Ledger
@@ -134,10 +132,9 @@ const validateTransaction = async (req, res) => {
                     // Check stock first?
                     const currentStock = await tx.stock.findUnique({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.sourceWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null
+                                productId: item.productId
                             } 
                         }
                     });
@@ -147,10 +144,9 @@ const validateTransaction = async (req, res) => {
 
                     await tx.stock.update({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.sourceWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null
+                                productId: item.productId
                             } 
                         },
                         data: { quantity: { decrement: item.quantity } }
@@ -169,10 +165,9 @@ const validateTransaction = async (req, res) => {
                     // Decrease Source
                     const currentStock = await tx.stock.findUnique({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.sourceWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null
+                                productId: item.productId
                             } 
                         }
                     });
@@ -182,10 +177,9 @@ const validateTransaction = async (req, res) => {
 
                     await tx.stock.update({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.sourceWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null
+                                productId: item.productId
                             } 
                         },
                         data: { quantity: { decrement: item.quantity } }
@@ -205,18 +199,16 @@ const validateTransaction = async (req, res) => {
                     // Increase Target
                     const targetStock = await tx.stock.upsert({
                         where: { 
-                            warehouseId_productId_subLocationId: { 
+                            warehouseId_productId: { 
                                 warehouseId: transaction.targetWarehouseId, 
-                                productId: item.productId,
-                                subLocationId: null
+                                productId: item.productId
                             } 
                         },
                         update: { quantity: { increment: item.quantity } },
                         create: { 
                             warehouseId: transaction.targetWarehouseId, 
                             productId: item.productId, 
-                            quantity: item.quantity,
-                            subLocationId: null
+                            quantity: item.quantity
                         }
                     });
 
@@ -241,28 +233,25 @@ const validateTransaction = async (req, res) => {
                     if (isAdd) {
                         const stock = await tx.stock.upsert({
                             where: { 
-                                warehouseId_productId_subLocationId: { 
+                                warehouseId_productId: { 
                                     warehouseId, 
-                                    productId: item.productId,
-                                    subLocationId: null
+                                    productId: item.productId
                                 } 
                             },
                             update: { quantity: { increment: adjustmentQuantity } },
                             create: { 
                                 warehouseId, 
                                 productId: item.productId, 
-                                quantity: adjustmentQuantity,
-                                subLocationId: null
+                                quantity: adjustmentQuantity
                             }
                         });
                         newBalance = stock.quantity;
                     } else {
                         const currentStock = await tx.stock.findUnique({
                             where: { 
-                                warehouseId_productId_subLocationId: { 
+                                warehouseId_productId: { 
                                     warehouseId, 
-                                    productId: item.productId,
-                                    subLocationId: null
+                                    productId: item.productId
                                 } 
                             }
                         });
@@ -271,10 +260,9 @@ const validateTransaction = async (req, res) => {
                         }
                         const stock = await tx.stock.update({
                             where: { 
-                                warehouseId_productId_subLocationId: { 
+                                warehouseId_productId: { 
                                     warehouseId, 
-                                    productId: item.productId,
-                                    subLocationId: null
+                                    productId: item.productId
                                 } 
                             },
                             data: { quantity: { decrement: adjustmentQuantity } }
@@ -304,11 +292,11 @@ const validateTransaction = async (req, res) => {
         res.json(result);
 
     } catch (error) {
+        console.error('Error validating transaction:', error);
         if (error.message.includes('Insufficient stock')) {
             return res.status(400).json({ message: error.message });
         }
-        console.error(error);
-        res.status(500).json({ message: 'Error validating transaction' });
+        res.status(500).json({ message: error.message || 'Error validating transaction' });
     }
 };
 
@@ -380,10 +368,9 @@ const createReorder = async (req, res) => {
 
         const stock = await prisma.stock.findUnique({
             where: { 
-                warehouseId_productId_subLocationId: { 
+                warehouseId_productId: { 
                     warehouseId, 
-                    productId,
-                    subLocationId: null
+                    productId
                 } 
             }
         });

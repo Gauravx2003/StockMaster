@@ -69,7 +69,7 @@ model Stock {
   warehouse     Warehouse    @relation(fields: [warehouseId], references: [id])
   subLocation   SubLocation? @relation(fields: [subLocationId], references: [id])
 
-  @@unique([warehouseId, productId, subLocationId])
+  @@unique([warehouseId, productId])
 }
 
 model Transaction {

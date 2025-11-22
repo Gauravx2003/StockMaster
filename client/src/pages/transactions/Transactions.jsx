@@ -36,7 +36,8 @@ const Transactions = ({ typeFilter }) => {
             await api.validateTransaction(id);
             fetchTransactions();
         } catch (error) {
-            alert('Validation failed');
+            console.error('Validation error:', error);
+            alert(error.response?.data?.message || 'Validation failed');
         }
     };
 

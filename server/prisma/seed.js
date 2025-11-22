@@ -1,159 +1,166 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
+const { faker } = require("@faker-js/faker");
 
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log("🔥 Resetting DB...");
+  
+  // Order matters (respect FK constraints)
+  await prisma.ledger.deleteMany();
+  await prisma.transactionItem.deleteMany();
+  await prisma.transaction.deleteMany();
+  await prisma.stock.deleteMany();
+  await prisma.subLocation.deleteMany();
+  await prisma.warehouse.deleteMany();
+  await prisma.location.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.user.deleteMany();
 
-    console.log("🌱 Seeding database...");
+  // ------------------------------------------------------
+  // USERS
+  // ------------------------------------------------------
+  console.log("👤 Seeding Users...");
 
-    // --- USERS ---
-    const admin = await prisma.user.create({
+  await prisma.user.createMany({
+    data: [
+      {
+        name: "Admin Manager",
+        email: "manager@stockmaster.io",
+        passwordHash: "hashed_pw",
+        role: "MANAGER",
+      },
+      ...Array.from({ length: 4 }).map((_, i) => ({
+        name: faker.person.fullName(),
+        email: `staff${i + 1}@stockmaster.io`,
+        passwordHash: "hashed_pw",
+        role: "STAFF",
+      })),
+    ],
+  });
+
+  // ------------------------------------------------------
+  // LOCATIONS
+  // ------------------------------------------------------
+  console.log("📍 Seeding Locations...");
+
+  const locations = [];
+  for (let i = 0; i < 10; i++) {
+    const loc = await prisma.location.create({
+      data: { name: faker.location.city() },
+    });
+    locations.push(loc);
+  }
+
+  // ------------------------------------------------------
+  // WAREHOUSES
+  // ------------------------------------------------------
+  console.log("🏭 Seeding Warehouses...");
+
+  const warehouses = [];
+  for (let i = 0; i < 20; i++) {
+    const loc = faker.helpers.arrayElement(locations);
+    const wh = await prisma.warehouse.create({
+      data: {
+        name: faker.company.name() + " Warehouse",
+        shortcode: faker.string.alpha({ length: 3, casing: "upper" }),
+        locationId: loc.id,
+        type: faker.helpers.arrayElement(["MAIN", "SECONDARY"]),
+        capacity: faker.number.int({ min: 100, max: 5000 }),
+      },
+    });
+    warehouses.push(wh);
+  }
+
+  // ------------------------------------------------------
+  // PRODUCTS
+  // ------------------------------------------------------
+  console.log("🏷️ Seeding Products...");
+
+  const products = [];
+  for (let i = 0; i < 50; i++) {
+    const prod = await prisma.product.create({
+      data: {
+        sku: faker.string.alphanumeric(10).toUpperCase(),
+        name: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+        category: faker.commerce.department(),
+        minStock: faker.number.int({ min: 5, max: 30 }),
+        uom: "UNIT",
+        price: parseFloat(faker.commerce.price({ min: 5, max: 100 })),
+        isActive: true,
+      },
+    });
+    products.push(prod);
+  }
+
+  // ------------------------------------------------------
+  // SUB LOCATIONS
+  // ------------------------------------------------------
+  console.log("📦 Creating Sub Locations...");
+
+  const subLocations = [];
+  for (const warehouse of warehouses) {
+    const numberOfSubLocations = faker.number.int({ min: 1, max: 4 });
+
+    for (let i = 0; i < numberOfSubLocations; i++) {
+      const sub = await prisma.subLocation.create({
         data: {
-            email: 'admin@example.com',
-            passwordHash: 'hashedpassword',
-            name: 'Admin User',
-            role: 'ADMIN'
-        }
-    });
+          name: faker.helpers.arrayElement([
+            "Rack A", "Rack B", "Rack C",
+            "Shelf 1", "Shelf 2"
+          ]),
+          warehouseId: warehouse.id,
+        },
+      });
 
-    const staff = await prisma.user.create({
-        data: {
-            email: 'staff@example.com',
-            passwordHash: 'hashedpassword',
-            name: 'John Staff',
-            role: 'STAFF'
-        }
-    });
-
-    // --- LOCATIONS ---
-    const mainLocation = await prisma.location.create({
-        data: {
-            name: "Main Facility"
-        }
-    });
-
-    const cityWarehouseLocation = await prisma.location.create({
-        data: {
-            name: "City Warehouse Zone"
-        }
-    });
-
-    // --- WAREHOUSES ---
-    const warehouseA = await prisma.warehouse.create({
-        data: {
-            name: "Main Warehouse",
-            shortcode: "MAIN",
-            locationId: mainLocation.id
-        }
-    });
-
-    const warehouseB = await prisma.warehouse.create({
-        data: {
-            name: "City Distribution",
-            shortcode: "CITY",
-            locationId: cityWarehouseLocation.id
-        }
-    });
-
-    // --- PRODUCTS ---
-    const products = await prisma.product.createMany({
-        data: [
-            {
-                sku: "PRD001",
-                name: "Steel Rod",
-                category: "Material",
-                price: 120,
-                uom: "KG",
-                isActive: true
-            },
-            {
-                sku: "PRD002",
-                name: "Copper Wire",
-                category: "Material",
-                price: 95.5,
-                uom: "ROLL",
-                isActive: true
-            },
-            {
-                sku: "PRD003",
-                name: "Safety Gloves",
-                category: "Safety",
-                price: 15,
-                uom: "PAIR",
-                isActive: false
-            },
-            {
-                sku: "PRD004",
-                name: "Packaging Tape",
-                category: "Supplies",
-                price: 4,
-                uom: "ROLL",
-                isActive: true
-            }
-        ]
-    });
-
-    console.log("✔ Products added!");
-
-    // Fetch Products to create stock relations
-    const productList = await prisma.product.findMany();
-
-    // --- STOCK ENTRIES ---
-    for (const product of productList) {
-        await prisma.stock.create({
-            data: {
-                warehouseId: warehouseA.id,
-                productId: product.id,
-                quantity: Math.floor(Math.random() * 200) + 20
-            }
-        });
-
-        await prisma.stock.create({
-            data: {
-                warehouseId: warehouseB.id,
-                productId: product.id,
-                quantity: Math.floor(Math.random() * 100) + 10
-            }
-        });
+      subLocations.push(sub);
     }
+  }
 
-    console.log("📦 Stock levels created.");
+  // ------------------------------------------------------
+  // STOCK (safe, unique)
+  // ------------------------------------------------------
+  console.log("📚 Seeding Stock...");
 
-    // --- SAMPLE TRANSACTION ---
-    const transaction = await prisma.transaction.create({
-        data: {
-            type: "TRANSFER",
-            status: "COMPLETED",
-            createdById: admin.id,
-            sourceWarehouseId: warehouseA.id,
-            targetWarehouseId: warehouseB.id,
-            items: {
-                create: [
-                    {
-                        productId: productList[0].id,
-                        quantity: 10
-                    },
-                    {
-                        productId: productList[1].id,
-                        quantity: 5
-                    }
-                ]
-            }
+  // To prevent duplicates: upsert for each (warehouse, product, subLocation)
+  for (const subLoc of subLocations) {
+    const warehouse = warehouses.find(w => w.id === subLoc.warehouseId);
+
+    // assign 20–30 random products per subLocation
+    const stockProducts = faker.helpers.arrayElements(products, 25);
+
+    for (const product of stockProducts) {
+      await prisma.stock.upsert({
+        where: {
+          warehouseId_productId_subLocationId: {
+            warehouseId: warehouse.id,
+            productId: product.id,
+            subLocationId: subLoc.id
+          }
+        },
+        update: {
+          quantity: faker.number.int({ min: 0, max: 200 })
+        },
+        create: {
+          warehouseId: warehouse.id,
+          productId: product.id,
+          subLocationId: subLoc.id,
+          quantity: faker.number.int({ min: 0, max: 200 })
         }
-    });
+      });
+    }
+  }
 
-    console.log("➡ Example transaction created:", transaction.id);
-
-    console.log("🎉 Seeding completed!");
+  console.log("🔥 Seeding Completed Successfully!");
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+  .then(() => {
+    console.log("✨ Done!");
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

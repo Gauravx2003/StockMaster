@@ -13,7 +13,7 @@ const AdjustmentForm = () => {
     const [items, setItems] = useState([{ productId: '', quantity: 1 }]);
     const [formData, setFormData] = useState({
         reference: '',
-        sourceWarehouseId: '', // For adjustments, we just need one warehouse context usually
+        targetWarehouseId: '', // For adjustments, we use targetWarehouseId
         adjustmentType: 'ADD', // ADD or REMOVE
         notes: ''
     });
@@ -93,8 +93,8 @@ const AdjustmentForm = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Warehouse</label>
                             <select
                                 className="input w-full"
-                                value={formData.sourceWarehouseId}
-                                onChange={(e) => setFormData({ ...formData, sourceWarehouseId: e.target.value })}
+                                value={formData.targetWarehouseId}
+                                onChange={(e) => setFormData({ ...formData, targetWarehouseId: e.target.value })}
                                 required
                             >
                                 <option value="">Select Warehouse</option>
