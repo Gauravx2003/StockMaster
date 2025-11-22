@@ -1,0 +1,55 @@
+# StockMaster API Documentation
+
+## Auth APIs
+- **POST** /auth/signup
+- **POST** /auth/login
+- **POST** /auth/reset-otp
+- **POST** /auth/reset
+- **POST** /auth/refresh
+- **POST** /auth/logout
+- **GET** /auth/me
+
+## Product APIs
+- **GET** /products
+- **POST** /products
+- **GET** /products/:id
+- **PUT** /products/:id
+- **DELETE** /products/:id
+- **GET** /products/:id/stock
+
+## Warehouse APIs
+- **GET** /warehouses
+- **POST** /warehouses
+- **GET** /warehouses/:id
+- **PUT** /warehouses/:id
+- **DELETE** /warehouses/:id
+
+## Location APIs
+- **GET** /locations
+- **POST** /locations
+- **GET** /locations/:id
+- **PUT** /locations/:id
+- **DELETE** /locations/:id
+
+## Transaction APIs
+- **POST** /transactions/in
+- **POST** /transactions/out
+- **POST** /transactions/transfer
+- **POST** /transactions/adjust
+- **GET** /transactions
+- **GET** /transactions/:id
+- **POST** /transactions/:id/status
+- **GET** /transactions/history
+
+## Dashboard APIs
+- **GET** /dashboard/kpi
+
+## User APIs (Optional)
+- **GET** /users
+- **GET** /users/:id
+- **PUT** /users/:id
+
+## Settings APIs (Optional)
+- **GET** /settings/reorder-rules
+- **POST** /settings/reorder-rules
+"""
